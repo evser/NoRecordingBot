@@ -40,10 +40,10 @@ abstract class MessageHandler(val bot: TelegramLongPollingBot, val message: Mess
         return sendMessage(message.chatId, text)
     }
 
-    protected fun sendGif(text: String) {
+    protected fun sendGif(text: String): Boolean {
         try {
             val giphy = GiphyTelegram(UserData.GIPHY_KEY)
-            val searchFeed = giphy.search(text, 10, Random().nextInt(10))
+            val searchFeed = giphy.search(text, 10, Random().nextInt(5))
             if (!searchFeed.dataList.isEmpty()) {
                 val gifLocation = searchFeed.dataList[Random().nextInt(searchFeed.dataList.size)]
                         .images
@@ -54,10 +54,11 @@ abstract class MessageHandler(val bot: TelegramLongPollingBot, val message: Mess
                 sendDocument.setChatId(message.chatId!!)
                 sendDocument.document = gifLocation
                 bot.sendDocument(sendDocument)
+                return true
             }
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
-
+        return false
     }
 }

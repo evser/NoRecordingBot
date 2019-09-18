@@ -29,7 +29,8 @@ class TextMessageHandler(bot: TelegramLongPollingBot, message: Message) : Messag
             if (refillDate == null || refillDate.isBefore(LocalDateTime.now().minusMinutes(UserData.EXCUSE_REFILL_PERIOD))) {
                 UserData.userRefill[from.id] = LocalDateTime.now()
                 val userOperations = UserData.allowedOperationsPerDay[from.id]
-                UserData.allowedOperationsPerDay[from.id] = userOperations?.copy(second = UserData.REFILL_COUNT) ?: Pair(LocalDateTime.now(), UserData.REFILL_COUNT)
+                UserData.allowedOperationsPerDay[from.id] = userOperations?.copy(second = UserData.REFILL_COUNT)
+                        ?: Pair(LocalDateTime.now(), UserData.REFILL_COUNT)
                 sendMessage("You have %d additional attempt(-s).".format(UserData.REFILL_COUNT))
             } else {
                 sendMessage("Next refill is available on " + ZonedDateTime.of(refillDate, ZoneId.systemDefault()).plusMinutes(UserData.EXCUSE_REFILL_PERIOD)
@@ -44,13 +45,16 @@ class TextMessageHandler(bot: TelegramLongPollingBot, message: Message) : Messag
                 banUser(banCommand[1])
             }
         } else {
-            if (countTriggers(GifTriggerData.TRIGGER_WORDS, text) > countTriggers(GifTriggerData.EXCLUDED_WORDS, text)
+            if (triggerSendGif
+                    || countTriggers(GifTriggerData.TRIGGER_WORDS, text) > countTriggers(GifTriggerData.EXCLUDED_WORDS, text)
                     || Random().nextInt(60) == 0) {
                 var gifText = text
                 for (word in GifTriggerData.TRIGGER_WORDS) {
-                    gifText = gifText.replace(word, "", ignoreCase = true).trim()
+                    gifText = gifText.replace(word, "", ignoreCase = true)
+                            .replace("\\p{Punct}".toRegex(), "")
+                            .trim()
                 }
-                sendGif(gifText)
+                triggerSendGif = !sendGif(gifText)
             } else if (shouldTriggerOn(GifTriggerData.KISS_SMILES, text)) {
                 if (Random().nextBoolean()) {
                     sendGif(text)
@@ -99,7 +103,7 @@ class TextMessageHandler(bot: TelegramLongPollingBot, message: Message) : Messag
             sendMessage("You are banned for $BAN_USER_SECONDS seconds")
             sendGif("ban")
         } else {
-            sendMessage("Already banned");
+            sendMessage("Already banned")
         }
         Timer().schedule(BAN_USER_SECONDS * 1000L) {
             UserData.bannedUsers.remove(from.id)
@@ -119,6 +123,7 @@ class TextMessageHandler(bot: TelegramLongPollingBot, message: Message) : Messag
     }
 
     companion object {
+        private var triggerSendGif: Boolean = false
         val ultUsers = ConcurrentSkipListSet<Int>()
 
         fun shouldBeUsed(message: Message): Boolean {
