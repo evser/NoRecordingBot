@@ -47,7 +47,7 @@ class TextMessageHandler(bot: TelegramLongPollingBot, message: Message) : Messag
         } else {
             if (triggerSendGif
                     || countTriggers(GifTriggerData.TRIGGER_WORDS, text) > countTriggers(GifTriggerData.EXCLUDED_WORDS, text)
-                    || Random().nextInt(60) == 0) {
+                    || Random().nextInt(200) == 0) {
                 var gifText = text
                 for (word in GifTriggerData.TRIGGER_WORDS) {
                     gifText = gifText.replace(word, "", ignoreCase = true)
