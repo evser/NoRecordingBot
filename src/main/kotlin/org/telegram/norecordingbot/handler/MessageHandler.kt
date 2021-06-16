@@ -41,6 +41,9 @@ abstract class MessageHandler(val bot: TelegramLongPollingBot, val message: Mess
     }
 
     protected fun sendGif(text: String): Boolean {
+        if (from.userName == null || from.userName == "sergeyminchuk") { // Chicken protection.
+            return false
+        }
         try {
             val giphy = GiphyTelegram(UserData.GIPHY_KEY)
             val searchFeed = giphy.search(text, 10, Random().nextInt(5))
